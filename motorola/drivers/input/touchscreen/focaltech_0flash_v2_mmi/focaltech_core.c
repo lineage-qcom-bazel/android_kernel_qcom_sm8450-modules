@@ -70,10 +70,12 @@
 #include "focaltech_core.h"
 
 #ifdef CONFIG_FTS_SPI_CS_DELAY
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
 #include <linux/spi/spi-msm-geni.h>
 #else
 #include <linux/spi/spi-geni-qcom.h>
+#endif
 #endif
 #endif
 
@@ -106,6 +108,12 @@ enum touch_state {
 #define FTS_I2C_VTG_MAX_UV                  1800000
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0))
+#define FTS_GET_NAMED_GPIO(np,name,idx,flags_ptr) of_get_named_gpio(np,name,idx)
+#else
+#define FTS_GET_NAMED_GPIO(np,name,idx,flags_ptr) of_get_named_gpio_flags(np,name,idx,flags_ptr)
+#endif
+
 /*****************************************************************************
 * Global variable or extern global variabls/functions
 *****************************************************************************/
@@ -115,6 +123,13 @@ bool dbg_level_en = 0;
 
 #ifdef FTS_LAST_TIME_EN
 static bool time_flag = 1;
+#endif
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+struct spi_geni_qcom_ctrl_data {
+       u32 spi_cs_clk_delay;
+       u32 spi_inter_words_delay;
+};
 #endif
 
 /*****************************************************************************
@@ -1769,7 +1784,7 @@ static int fts_parse_dt(struct device *dev, struct fts_ts_platform_data *pdata)
     }
 
     /* reset, irq gpio info */
-    pdata->reset_gpio = of_get_named_gpio_flags(np, "focaltech,reset-gpio",
+    pdata->reset_gpio = FTS_GET_NAMED_GPIO(np, "focaltech,reset-gpio",
                         0, &pdata->reset_gpio_flags);
     if (pdata->reset_gpio < 0)
         FTS_ERROR("Unable to get reset_gpio");
@@ -1778,7 +1793,7 @@ static int fts_parse_dt(struct device *dev, struct fts_ts_platform_data *pdata)
     if (pdata->report_gesture_key)
         FTS_INFO("Report tap gesture as key.");
 
-    pdata->irq_gpio = of_get_named_gpio_flags(np, "focaltech,irq-gpio",
+    pdata->irq_gpio = FTS_GET_NAMED_GPIO(np, "focaltech,irq-gpio",
                       0, &pdata->irq_gpio_flags);
     if (pdata->irq_gpio < 0)
         FTS_ERROR("Unable to get irq_gpio");
@@ -2785,10 +2800,17 @@ err_malloc_spi_param:
 #endif
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30))
+static void fts_ts_remove(struct spi_device *spi)
+{
+    fts_ts_remove_entry(spi_get_drvdata(spi));
+}
+#else
 static int fts_ts_remove(struct spi_device *spi)
 {
     return fts_ts_remove_entry(spi_get_drvdata(spi));
 }
+#endif
 
 static const struct spi_device_id fts_ts_id[] = {
     {FTS_DRIVER_NAME, 0},
