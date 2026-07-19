@@ -53,7 +53,7 @@ def define_sun():
 
 def define_parrot():
     define_bt_modules(
-        target = "parrot66",
+        target = "parrot",
         modules = [
             "btpower",
             "bt_fm_slim",
