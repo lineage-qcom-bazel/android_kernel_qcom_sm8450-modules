@@ -528,7 +528,11 @@ int moto_dda_register_cdevice(void) {
 	}
 
 	/* register a class */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,6,0)
+	dda_cdev_ctrl.penraw_char_dev_class = class_create(DEVICE_NAME);
+#else
 	dda_cdev_ctrl.penraw_char_dev_class = class_create(THIS_MODULE, DEVICE_NAME);
+#endif
 	if (IS_ERR(dda_cdev_ctrl.penraw_char_dev_class)) {
 		DDA_ERR("class_create()");
 		cdev_del(&dda_cdev_ctrl.penraw_char_dev);
