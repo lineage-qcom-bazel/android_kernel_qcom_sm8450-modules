@@ -20,6 +20,9 @@
 #include <linux/acpi.h>
 #include <linux/gpio.h>
 #include <linux/of_gpio.h>
+#include <linux/of.h>
+#include <linux/version.h>
+#include <dt-bindings/gpio/gpio.h>
 
 #include "sgm4154x_charger_lite.h"
 
@@ -1377,7 +1380,6 @@ static bool sgm4154x_dpdm_detect_is_done(struct sgm4154x_device * sgm)
 
 static void charger_monitor_work_func(struct work_struct *work)
 {
-	int ret = 0;
 	//static u8 last_chg_method = 0;
 	bool state_changed = false;
 	struct sgm4154x_state state;
@@ -1385,7 +1387,7 @@ static void charger_monitor_work_func(struct work_struct *work)
 					struct sgm4154x_device,
 					charge_monitor_work.work);
 
-	ret = sgm4154x_get_state(sgm, &state);
+	sgm4154x_get_state(sgm, &state);
 	state_changed = sgm4154x_state_changed(sgm, &state);
 	mutex_lock(&sgm->lock);
 	sgm->state = state;
@@ -1739,7 +1741,12 @@ static int sgm4154x_parse_dt(struct sgm4154x_device *sgm)
 	int ret;
 	//u32 val = 0;
 	int irq_gpio = 0, irqn = 0;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+	u32 flags = 0;
+	struct of_phandle_args gpio_args;
+#else
 	enum of_gpio_flags flags;
+#endif
 	const char *usb_psy_name = NULL;
 	const char *wls_psy_name = NULL;
 	int i, len;
@@ -1780,8 +1787,22 @@ static int sgm4154x_parse_dt(struct sgm4154x_device *sgm)
 	if (ret)
 		sgm->ibat_occp_threshold = DEF_IBAT_OCCP_MA;
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+	/* of_get_named_gpio_flags() was removed; read the flags cell directly */
+	sgm->high_load_en_gpio = of_get_named_gpio(sgm->dev->of_node,
+					"mmi,high-load-en-gpio", 0);
+	flags = 0;
+	if (!of_parse_phandle_with_args(sgm->dev->of_node,
+					"mmi,high-load-en-gpio", "#gpio-cells",
+					0, &gpio_args)) {
+		if (gpio_args.args_count > 1)
+			flags = gpio_args.args[1];
+		of_node_put(gpio_args.np);
+	}
+#else
 	sgm->high_load_en_gpio = of_get_named_gpio_flags(sgm->dev->of_node,
 					"mmi,high-load-en-gpio", 0, &flags);
+#endif
 	if (gpio_is_valid(sgm->high_load_en_gpio)) {
 		ret = gpio_request(sgm->high_load_en_gpio,
 					"high-load-en-gpio");
@@ -1790,15 +1811,33 @@ static int sgm4154x_parse_dt(struct sgm4154x_device *sgm)
 					__func__, sgm->high_load_en_gpio);
 			sgm->high_load_en_gpio = -EINVAL;
 		} else {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+			sgm->high_load_active_low = !!(flags & GPIO_ACTIVE_LOW);
+#else
 			sgm->high_load_active_low = !!(flags & OF_GPIO_ACTIVE_LOW);
+#endif
 			/* Disable batt high load switch by default */
 			gpio_direction_output(sgm->high_load_en_gpio,
 					sgm->high_load_active_low);
 		}
 	}
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+	/* of_get_named_gpio_flags() was removed; read the flags cell directly */
+	sgm->low_load_en_gpio = of_get_named_gpio(sgm->dev->of_node,
+					"mmi,low-load-en-gpio", 0);
+	flags = 0;
+	if (!of_parse_phandle_with_args(sgm->dev->of_node,
+					"mmi,low-load-en-gpio", "#gpio-cells",
+					0, &gpio_args)) {
+		if (gpio_args.args_count > 1)
+			flags = gpio_args.args[1];
+		of_node_put(gpio_args.np);
+	}
+#else
 	sgm->low_load_en_gpio = of_get_named_gpio_flags(sgm->dev->of_node,
 					"mmi,low-load-en-gpio", 0, &flags);
+#endif
 	if (gpio_is_valid(sgm->low_load_en_gpio)) {
 		ret = gpio_request(sgm->low_load_en_gpio,
 					"low-load-en-gpio");
@@ -1807,7 +1846,11 @@ static int sgm4154x_parse_dt(struct sgm4154x_device *sgm)
 					__func__, sgm->low_load_en_gpio);
 			sgm->low_load_en_gpio = -EINVAL;
 		} else {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+			sgm->low_load_active_low = !!(flags & GPIO_ACTIVE_LOW);
+#else
 			sgm->low_load_active_low = !!(flags & OF_GPIO_ACTIVE_LOW);
+#endif
 			/* Disable batt low load switch by default */
 			gpio_direction_output(sgm->low_load_en_gpio,
 					sgm->low_load_active_low);
@@ -2260,9 +2303,8 @@ static int sgm4154x_is_enabled_vbus(struct regulator_dev *rdev)
 {
 	struct sgm4154x_device *sgm = rdev_get_drvdata(rdev);
 	int temp = 0;
-	int ret = 0;
 
-	ret = regmap_read(sgm->regmap, SGM4154x_CHRG_CTRL_1, &temp);
+	regmap_read(sgm->regmap, SGM4154x_CHRG_CTRL_1, &temp);
 	return (temp&SGM4154x_OTG_EN)? 1 : 0;
 }
 
@@ -3391,13 +3433,19 @@ static ssize_t charger_suspend_show(struct device *dev,
 }
 DEVICE_ATTR_RW(charger_suspend);
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30))
+static int sgm4154x_probe(struct i2c_client *client)
+#else
 static int sgm4154x_probe(struct i2c_client *client,
 			 const struct i2c_device_id *id)
+#endif
 {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30))
+	const struct i2c_device_id *id = i2c_client_get_device_id(client);
+#endif
 	struct device *dev = &client->dev;
 	struct sgm4154x_device *sgm;
 	int ret;
-	int otg_notify;
 	char *name = NULL;
 
 	sgm = devm_kzalloc(dev, sizeof(*sgm), GFP_KERNEL);
@@ -3454,14 +3502,14 @@ static int sgm4154x_probe(struct i2c_client *client,
 	if (!IS_ERR_OR_NULL(sgm->usb2_phy)) {
 		INIT_WORK(&sgm->usb_work, sgm4154x_usb_work);
 		sgm->usb_nb.notifier_call = sgm4154x_usb_notifier;
-		otg_notify = usb_register_notifier(sgm->usb2_phy, &sgm->usb_nb);
+		usb_register_notifier(sgm->usb2_phy, &sgm->usb_nb);
 	}
 
 	sgm->usb3_phy = devm_usb_get_phy(dev, USB_PHY_TYPE_USB3);
 	if (!IS_ERR_OR_NULL(sgm->usb3_phy)) {
 		INIT_WORK(&sgm->usb_work, sgm4154x_usb_work);
 		sgm->usb_nb.notifier_call = sgm4154x_usb_notifier;
-		otg_notify = usb_register_notifier(sgm->usb3_phy, &sgm->usb_nb);
+		usb_register_notifier(sgm->usb3_phy, &sgm->usb_nb);
 	}
 
 	INIT_DELAYED_WORK(&sgm->charge_detect_delayed_work, charger_detect_work_func);
@@ -3541,7 +3589,11 @@ error_out:
 	return ret;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+static void sgm4154x_charger_remove(struct i2c_client *client)
+#else
 static int sgm4154x_charger_remove(struct i2c_client *client)
+#endif
 {
 	struct sgm4154x_device *sgm = i2c_get_clientdata(client);
 
@@ -3586,7 +3638,9 @@ static int sgm4154x_charger_remove(struct i2c_client *client)
 
 	mutex_destroy(&sgm->lock);
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
 	return 0;
+#endif
 }
 
 static void sgm4154x_charger_shutdown(struct i2c_client *client)
