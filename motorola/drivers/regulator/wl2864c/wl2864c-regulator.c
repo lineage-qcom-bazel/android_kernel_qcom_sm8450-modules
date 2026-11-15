@@ -19,6 +19,7 @@
 #include <linux/regulator/driver.h>
 #include <linux/regulator/machine.h>
 #include <linux/regulator/of_regulator.h>
+#include <linux/version.h>
 #include "wl2864c-regulator.h"
 
 enum slg51000_regulators {
@@ -266,8 +267,12 @@ static int wl2864c_regulator_init(struct wl2864c *chip)
 	return 0;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30))
+static int wl2864c_i2c_probe(struct i2c_client *client)
+#else
 static int wl2864c_i2c_probe(struct i2c_client *client,
 			      const struct i2c_device_id *id)
+#endif
 {
 	struct device *dev = &client->dev;
 	struct wl2864c *chip;
@@ -360,18 +365,23 @@ static void wl2864c_i2c_shutdown(struct i2c_client *client)
 	}
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+static void wl2864c_i2c_remove(struct i2c_client *client)
+#else
 static int wl2864c_i2c_remove(struct i2c_client *client)
+#endif
 {
 	struct wl2864c *chip = i2c_get_clientdata(client);
 	struct gpio_desc *desc;
-	int ret = 0;
 
 	if (chip->chip_cs_pin > 0) {
 		desc = gpio_to_desc(chip->chip_cs_pin);
-		ret = gpiod_direction_output_raw(desc, GPIOF_INIT_LOW);
+		gpiod_direction_output_raw(desc, GPIOF_INIT_LOW);
 	}
 
-	return ret;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
+	return 0;
+#endif
 }
 
 static const struct i2c_device_id wl2864c_i2c_id[] = {
