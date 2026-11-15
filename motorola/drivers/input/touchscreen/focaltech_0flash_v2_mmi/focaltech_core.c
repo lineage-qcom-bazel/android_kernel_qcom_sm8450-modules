@@ -37,9 +37,23 @@
 #include <linux/of_device.h>
 #include <linux/of_gpio.h>
 #include <linux/of_irq.h>
+#include <linux/version.h>
+
+/* Newer kernels use panel_event_notifier instead of drm_panel_notifier */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30))
+#define FTS_DRM_PANEL_EVENT_NOTIFICATIONS
+#endif
+#if !defined(FTS_DRM_PANEL_EVENT_NOTIFICATIONS) && defined(__has_include)
+#if __has_include(<linux/soc/qcom/panel_event_notifier.h>)
+#define FTS_DRM_PANEL_EVENT_NOTIFICATIONS
+#endif
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30)
+#include <linux/pinctrl/consumer.h>
+#endif
 #if defined(CONFIG_DRM)
 #if defined(CONFIG_DRM_PANEL)
-#ifdef CONFIG_FOCALTECH_DRM_PANEL_EVENT_NOTIFICATIONS
+#ifdef FTS_DRM_PANEL_EVENT_NOTIFICATIONS
 #include <linux/soc/qcom/panel_event_notifier.h>
 #endif
 #include <drm/drm_panel.h>
@@ -109,7 +123,7 @@ static bool time_flag = 1;
 #ifndef CONFIG_INPUT_TOUCHSCREEN_MMI
 static int fts_ts_suspend(struct device *dev);
 static int fts_ts_resume(struct device *dev);
-#ifdef CONFIG_FOCALTECH_DRM_PANEL_EVENT_NOTIFICATIONS
+#ifdef FTS_DRM_PANEL_EVENT_NOTIFICATIONS
 static void fts_ts_panel_notifier_callback(enum panel_event_notifier_tag tag,
 		 struct panel_event_notification *event, void *client_data);
 #endif
@@ -1857,7 +1871,7 @@ static int drm_check_dt(struct device_node *np)
     return -ENODEV;
 }
 
-#ifdef CONFIG_FOCALTECH_DRM_PANEL_EVENT_NOTIFICATIONS
+#ifdef FTS_DRM_PANEL_EVENT_NOTIFICATIONS
 static void fts_ts_register_for_panel_events(struct device_node *dp,
 					struct fts_ts_data *ts_data)
 {
@@ -1868,8 +1882,9 @@ static void fts_ts_register_for_panel_events(struct device_node *dp,
 			PANEL_EVENT_NOTIFIER_CLIENT_PRIMARY_TOUCH, active_panel,
 			&fts_ts_panel_notifier_callback, ts_data);
 
-	if (!cookie) {
-		pr_err("Failed to register for panel events\n");
+	if (IS_ERR_OR_NULL(cookie)) {
+		pr_err("Failed to register for panel events: %d\n",
+			PTR_ERR_OR_ZERO(cookie));
 		return;
 	}
 
@@ -1894,11 +1909,11 @@ static void fts_ts_panel_notifier_callback(enum panel_event_notifier_tag tag,
 		if (notification->notif_data.early_trigger)
 			FTS_DEBUG("resume notification pre commit\n");
 		else
-			queue_work(fts_data->ts_workqueue, &fts_data->resume_work);
+			queue_work(ts_data->ts_workqueue, &ts_data->resume_work);
 		break;
 	case DRM_PANEL_EVENT_BLANK:
 		if (notification->notif_data.early_trigger) {
-			cancel_work_sync(&fts_data->resume_work);
+			cancel_work_sync(&ts_data->resume_work);
 			fts_ts_suspend(ts_data->dev);
 		} else {
 			FTS_DEBUG("suspend notification post commit\n");
@@ -2330,11 +2345,11 @@ static int fts_ts_probe_entry(struct fts_ts_data *ts_data)
 
 #ifndef CONFIG_INPUT_TOUCHSCREEN_MMI
 #if defined(CONFIG_DRM)
-#ifndef CONFIG_FOCALTECH_DRM_PANEL_EVENT_NOTIFICATIONS
+#ifndef FTS_DRM_PANEL_EVENT_NOTIFICATIONS
 	ts_data->fb_notif.notifier_call = drm_notifier_callback;
 #endif
 #if defined(CONFIG_DRM_PANEL)
-#ifdef CONFIG_FOCALTECH_DRM_PANEL_EVENT_NOTIFICATIONS
+#ifdef FTS_DRM_PANEL_EVENT_NOTIFICATIONS
 	fts_ts_register_for_panel_events(ts_data->dev->of_node, ts_data);
 #else
     if (active_panel) {
@@ -2474,7 +2489,7 @@ static int fts_ts_remove_entry(struct fts_ts_data *ts_data)
 #ifndef CONFIG_INPUT_TOUCHSCREEN_MMI
 #if defined(CONFIG_DRM)
 #if defined(CONFIG_DRM_PANEL)
-#ifdef CONFIG_FOCALTECH_DRM_PANEL_EVENT_NOTIFICATIONS
+#ifdef FTS_DRM_PANEL_EVENT_NOTIFICATIONS
     if (active_panel && ts_data->notifier_cookie)
 		panel_event_notifier_unregister(ts_data->notifier_cookie);
 #else
