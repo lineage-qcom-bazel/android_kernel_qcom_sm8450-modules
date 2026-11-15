@@ -18,6 +18,7 @@
 #include <linux/miscdevice.h>
 #include <asm/uaccess.h>
 #include <linux/of_gpio.h>
+#include <linux/version.h>
 #include <linux/irq.h>
 #include <linux/pen_detection_notify.h>
 #ifdef CONFIG_HAS_WAKELOCK
@@ -414,7 +415,9 @@ static struct platform_driver bu520xx_pen_driver = {
 static int bu520xx_pen_probe(struct platform_device *pdev)
 {
 	struct device_node *np = pdev->dev.of_node;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
 	enum of_gpio_flags flags;
+#endif
 	int ret;
 
 	pen_dbg_func_in();
@@ -445,8 +448,13 @@ static int bu520xx_pen_probe(struct platform_device *pdev)
 	hall_sensor_dev->enable = 1;
 
 	//set gpio
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+	/* of_get_named_gpio_flags() was removed; flags were unused here anyway */
+	hall_sensor_dev->gpio = of_get_named_gpio(np, "rohm,nirq-gpio", 0);
+#else
 	hall_sensor_dev->gpio = of_get_named_gpio_flags(np,
 			"rohm,nirq-gpio", 0, &flags);
+#endif
 	 if (hall_sensor_dev->gpio < 0)
 	{
 		pen_err("[%s] GPIO for hall sensor does not exist.\n", DRIVER_NAME);
