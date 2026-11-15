@@ -2438,9 +2438,16 @@ static void bq_heartbeat_work(struct work_struct *work)
 			msecs_to_jiffies(FG_HEARTBEAT_RATE));
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30))
+static int bq_fg_probe(struct i2c_client *client)
+#else
 static int bq_fg_probe(struct i2c_client *client,
 							const struct i2c_device_id *id)
+#endif
 {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30))
+	const struct i2c_device_id *id = i2c_client_get_device_id(client);
+#endif
 	int ret;
 	struct bq_fg_chip *bq;
 	u8 *regs;
@@ -2622,7 +2629,11 @@ static int bq_fg_resume(struct device *dev)
 	return 0;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+static void bq_fg_remove(struct i2c_client *client)
+#else
 static int bq_fg_remove(struct i2c_client *client)
+#endif
 {
 	struct bq_fg_chip *bq = i2c_get_clientdata(client);
 
@@ -2642,7 +2653,9 @@ static int bq_fg_remove(struct i2c_client *client)
 		devm_regulator_put(bq->vdd_i2c_vreg);
 	}
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
 	return 0;
+#endif
 }
 
 static void bq_fg_shutdown(struct i2c_client *client)
