@@ -54,6 +54,7 @@
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/of_gpio.h>
+#include <linux/pinctrl/consumer.h>
 #include <linux/regulator/consumer.h>
 #include <linux/spi/spi.h>
 #include <linux/pm_wakeup.h>
@@ -1393,7 +1394,11 @@ int egisfp_probe(struct platform_device *pdev)
 		ERROR_PRINT(" %s : register_chrdev error \n", __func__);
 		return status;
 	}
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
 	egisfp_class = class_create(THIS_MODULE, EGIS_CLASS_NAME);
+#else
+	egisfp_class = class_create(EGIS_CLASS_NAME);
+#endif
 	if (IS_ERR(egisfp_class))
 	{
 		ERROR_PRINT(" %s : class_create error \n", __func__);
