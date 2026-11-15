@@ -379,7 +379,7 @@ static int slg51000_regulator_init(struct slg51000 *chip)
 				break;
 			}
 			/* Fall through - to the check below.*/
-
+			fallthrough;
 		default:
 			rdesc->linear_min_sel = vsel_range[0];
 			rdesc->n_voltages = vsel_range[1] + 1;
@@ -495,8 +495,12 @@ static void slg51000_clear_fault_log(struct slg51000 *chip)
 		dev_dbg(chip->dev, "Fault log: FLT_POR\n");
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30))
+static int slg51000_i2c_probe(struct i2c_client *client)
+#else
 static int slg51000_i2c_probe(struct i2c_client *client,
 			      const struct i2c_device_id *id)
+#endif
 {
 	struct device *dev = &client->dev;
 	struct slg51000 *chip;
@@ -574,18 +578,23 @@ static int slg51000_i2c_probe(struct i2c_client *client,
 	return ret;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+static void slg51000_i2c_remove(struct i2c_client *client)
+#else
 static int slg51000_i2c_remove(struct i2c_client *client)
+#endif
 {
 	struct slg51000 *chip = i2c_get_clientdata(client);
 	struct gpio_desc *desc;
-	int ret = 0;
 
 	if (chip->chip_cs_pin > 0) {
 		desc = gpio_to_desc(chip->chip_cs_pin);
-		ret = gpiod_direction_output_raw(desc, GPIOF_INIT_LOW);
+		gpiod_direction_output_raw(desc, GPIOF_INIT_LOW);
 	}
 
-	return ret;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
+	return 0;
+#endif
 }
 
 static const struct i2c_device_id slg51000_i2c_id[] = {
