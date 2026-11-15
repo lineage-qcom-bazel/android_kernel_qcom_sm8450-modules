@@ -21,11 +21,16 @@
 #include <linux/irq.h>
 #include <linux/gpio.h>
 #include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 #include <linux/input/mt.h>
 #include <linux/of_gpio.h>
 #include <linux/of_irq.h>
 #include <linux/power_supply.h>
 #include <linux/version.h>
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+#undef CONFIG_SPI_SM8450
+#endif
 
 #ifdef CONFIG_SPI_SM8450
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
@@ -1414,6 +1419,9 @@ static int32_t nvt_parse_dt(struct device *dev)
 {
 	struct device_node *np = dev->of_node;
 	int32_t ret = 0;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+	struct of_phandle_args gpio_args;
+#endif
 #ifndef CONFIG_INPUT_TOUCHSCREEN_MMI
 #if ((LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)) || defined(NVT_CONFIG_DRM_PANEL))
 	int num_of_panel_supplier;
@@ -1424,10 +1432,33 @@ static int32_t nvt_parse_dt(struct device *dev)
 #endif
 
 #if NVT_TOUCH_SUPPORT_HW_RST
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+	/* of_get_named_gpio_flags() was removed; read the flags cell directly */
+	ts->reset_gpio = of_get_named_gpio(np, "novatek,reset-gpio", 0);
+	ts->reset_flags = 0;
+	if (!of_parse_phandle_with_args(np, "novatek,reset-gpio", "#gpio-cells",
+					0, &gpio_args)) {
+		if (gpio_args.args_count > 1)
+			ts->reset_flags = gpio_args.args[1];
+		of_node_put(gpio_args.np);
+	}
+#else
 	ts->reset_gpio = of_get_named_gpio_flags(np, "novatek,reset-gpio", 0, &ts->reset_flags);
+#endif
 	NVT_LOG("novatek,reset-gpio=%d\n", ts->reset_gpio);
 #endif
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+	ts->irq_gpio = of_get_named_gpio(np, "novatek,irq-gpio", 0);
+	ts->irq_flags = 0;
+	if (!of_parse_phandle_with_args(np, "novatek,irq-gpio", "#gpio-cells",
+					0, &gpio_args)) {
+		if (gpio_args.args_count > 1)
+			ts->irq_flags = gpio_args.args[1];
+		of_node_put(gpio_args.np);
+	}
+#else
 	ts->irq_gpio = of_get_named_gpio_flags(np, "novatek,irq-gpio", 0, &ts->irq_flags);
+#endif
 	NVT_LOG("novatek,irq-gpio=%d\n", ts->irq_gpio);
 
 	ret = of_property_read_u32(np, "novatek,swrst-n8-addr", &SWRST_N8_ADDR);
@@ -3564,7 +3595,11 @@ Description:
 return:
 	Executive outcomes. 0---succeed.
 *******************************************************/
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0))
+static void nvt_ts_remove(struct spi_device *client)
+#else
 static int32_t nvt_ts_remove(struct spi_device *client)
+#endif
 {
 	NVT_LOG("Removing driver...\n");
 
@@ -3677,7 +3712,9 @@ static int32_t nvt_ts_remove(struct spi_device *client)
 		ts = NULL;
 	}
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0))
 	return 0;
+#endif
 }
 
 static void nvt_ts_shutdown(struct spi_device *client)

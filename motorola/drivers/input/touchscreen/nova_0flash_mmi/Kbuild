@@ -104,4 +104,5 @@ ifneq ($(filter m y,$(CONFIG_GTP_DDA_STYLUS)),)
 endif
 
 KBUILD_EXTRA_SYMBOLS += $(CURDIR)/$(KBUILD_EXTMOD)/../../../mmi_info/$(GKI_OBJ_MODULE_DIR)/Module.symvers
+KBUILD_EXTRA_SYMBOLS += $(CURDIR)/$(KBUILD_EXTMOD)/../../../../../qcom/opensource/display-drivers/msm/Module.symvers
 
