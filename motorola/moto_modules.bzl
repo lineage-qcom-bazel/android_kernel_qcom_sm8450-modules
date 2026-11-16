@@ -115,38 +115,3 @@ def moto_module(
             kernel_build = "//vendor/qcom/kernel:{}".format(tv),
             visibility = ["//visibility:public"],
         )
-
-# Motorola modules built for each product: (path under drivers/, module name).
-# Matches the modules loaded by device/motorola/sm6475-common.
-_PRODUCT_MODULES = {
-    "mona": [
-        ("input/misc/goodix_fod_mmi", "goodix_fod_mmi"),
-        ("input/misc/rbs_fod_mmi", "rbs_fod_mmi"),
-        ("input/touchscreen/goodix_berlin_mmi", "goodix_brl_mmi"),
-        ("input/touchscreen/touchscreen_mmi", "touchscreen_mmi"),
-        ("misc/hall", "hall_pen"),
-        ("misc/mmi_stow", "mmi_stow"),
-        ("misc/mmi_sys_temp", "mmi_sys_temp"),
-        ("misc/sx937x_multi", "sx937x_multi"),
-        ("misc/utag", "utags"),
-        ("mmi_annotate", "mmi_annotate"),
-        ("mmi_info", "mmi_info"),
-        ("mmi_relay", "mmi_relay"),
-        ("moto_netopt/con_dfpar", "con_dfpar"),
-        ("power/bm_adsp_ulog", "bm_adsp_ulog"),
-        ("power/mmi_charger", "mmi_charger"),
-        ("power/qpnp_adaptive_charge", "qpnp_adaptive_charge"),
-        ("power/qti_glink_charger", "qti_glink_charger"),
-        ("regulator/dio8015", "dio8015"),
-        ("sensors", "sensors_class"),
-    ],
-}
-
-def get_moto_product_modules(product):
-    """Module label templates for define_qti_targets(extra_modules = ...)."""
-    if product not in _PRODUCT_MODULES:
-        fail("No Motorola modules defined for product {}".format(product))
-    return [
-        "{{root}}/motorola/drivers/{}:{{base}}_{{variant}}_{}".format(path, name)
-        for path, name in _PRODUCT_MODULES[product]
-    ]
