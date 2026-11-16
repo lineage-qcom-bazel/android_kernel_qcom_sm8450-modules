@@ -116,7 +116,16 @@ moto_module(
         "//vendor/qcom/sm8450-modules/motorola/drivers/sensors:%b_sensors_class",
         "//vendor/qcom/sm8450-modules/motorola/drivers/mmi_info:%b_mmi_info",
         "//vendor/qcom/sm8450-modules/motorola/drivers/input/touchscreen/touchscreen_mmi:%b_touchscreen_mmi",
-        "//vendor/qcom/sm8450-modules/motorola/drivers/misc/pen:%b_bu520xx_pen",
         "//vendor/qcom/sm8450-modules/qcom/opensource/display-drivers:%b_display_drivers",
+    ],
+    # pen_detection_register_client comes from bu520xx_pen on genevn and
+    # from hall_pen everywhere else
+    product_deps = {
+        "genevn": [
+            "//vendor/qcom/sm8450-modules/motorola/drivers/misc/pen:%b_bu520xx_pen",
+        ],
+    },
+    default_product_deps = [
+        "//vendor/qcom/sm8450-modules/motorola/drivers/misc/hall:%b_hall_pen",
     ],
 )

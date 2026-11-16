@@ -101,7 +101,12 @@ moto_module(
     deps = [
         "//vendor/qcom/sm8450-modules/motorola/drivers/input/touchscreen/touchscreen_mmi:%b_touchscreen_mmi",
         "//vendor/qcom/sm8450-modules/motorola/drivers/mmi_info:%b_mmi_info",
-        "//vendor/qcom/sm8450-modules/motorola/drivers/misc/pen:%b_bu520xx_pen",
         "//vendor/qcom/sm8450-modules/qcom/opensource/display-drivers:%b_display_drivers",
     ],
+    # Only genevn has the stylus (CONFIG_INPUT_ILITEK_MMI_PEN_NOTIFIER)
+    product_deps = {
+        "genevn": [
+            "//vendor/qcom/sm8450-modules/motorola/drivers/misc/pen:%b_bu520xx_pen",
+        ],
+    },
 )

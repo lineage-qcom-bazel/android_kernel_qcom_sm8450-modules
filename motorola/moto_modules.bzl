@@ -53,6 +53,8 @@ def moto_module(
         copts = [],
         make_variables = [],
         product_make_variables = {},
+        product_deps = {},
+        default_product_deps = [],
         conditional_defines = {},
         conditional_srcs = {},
         conditional_copts = {},
@@ -71,6 +73,9 @@ def moto_module(
       copts: unconditional compiler options
       make_variables: make variables set for every product (Makefile KBUILD_OPTIONS)
       product_make_variables: dict of product -> additional make variables
+      product_deps: dict of product -> dependencies used instead of
+        default_product_deps for that product, %b is replaced as in deps
+      default_product_deps: dependencies for products not in product_deps
       conditional_defines: dict of make variable -> defines (the Kbuild ifneq blocks)
       conditional_srcs: dict of make variable -> sources
       conditional_copts: dict of make variable -> compiler options
@@ -87,6 +92,18 @@ def moto_module(
     for target, variant in MOTO_TARGET_VARIANTS:
         tv = "{}_{}".format(target, variant)
 
+        module_deps = common_deps + [dep.replace("%b", tv) for dep in deps]
+        if product_deps:
+            branches = {"//conditions:default": [dep.replace("%b", tv) for dep in default_product_deps]}
+            for product, product_dep_list in product_deps.items():
+                branches["//vendor/qcom/kernel:mmi_product_{}".format(product)] = [
+                    dep.replace("%b", tv)
+                    for dep in product_dep_list
+                ]
+            module_deps = module_deps + select(branches)
+        elif default_product_deps:
+            module_deps = module_deps + [dep.replace("%b", tv) for dep in default_product_deps]
+
         ddk_module(
             name = "{}_{}".format(tv, name),
             out = out or "{}.ko".format(name),
@@ -94,7 +111,7 @@ def moto_module(
             includes = includes,
             local_defines = local_defines + _resolve(conditional_defines, make_variables, product_make_variables),
             copts = copts + _resolve(conditional_copts, make_variables, product_make_variables),
-            deps = common_deps + [dep.replace("%b", tv) for dep in deps],
+            deps = module_deps,
             kernel_build = "//vendor/qcom/kernel:{}".format(tv),
             visibility = ["//visibility:public"],
         )
