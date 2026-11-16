@@ -1,0 +1,107 @@
+# SPDX-License-Identifier: GPL-2.0
+# Kleaf DDK translation of Kbuild, see motorola/moto_modules.bzl
+load("//vendor/qcom/sm8450-modules/motorola:moto_modules.bzl", "moto_module")
+
+moto_module(
+    name = "ili9882_mmi",
+    srcs = [
+        "ili9882.c",
+        "ili9882_spi.c",
+        "ili9882_qcom.c",
+        "ili9882_ic.c",
+        "ili9882_touch.c",
+        "ili9882_mp.c",
+        "ili9882_hostdl.c",
+        "ili9882_node.c",
+    ] + glob(["**/*.h"]),
+    # Always built against GKI (TARGET_BUILD_VARIANT=user)
+    local_defines = [
+        "GKI_EN_FLAG",
+    ],
+    # KBUILD_OPTIONS of the Makefile
+    make_variables = [
+        "CONFIG_INPUT_TOUCHSCREEN_MMI",
+        "CONFIG_DRM_PANEL_EVENT_NOTIFICATIONS",
+        "CONFIG_BOARD_USES_DOUBLE_TAP_CTRL",
+        "CONFIG_INPUT_ILI_0FLASH_MMI_NOTIFY_TOUCH_STATE",
+        "CONFIG_ILITEK_SUSPEND_PWROFF",
+        "CONFIG_ILITEK_GESTURE",
+        "CONFIG_ILI_TOUCH_LAST_TIME",
+        "CONFIG_ILITEK_FW_PANEL",
+        "CONFIG_ILITEK_RESUME_BY_DDI",
+    ],
+    product_make_variables = {
+        "genevn": [
+            "CONFIG_INPUT_ILITEK_MMI_PEN_NOTIFIER",
+            "CONFIG_ILITEK_PASSIVE_PEN",
+            "CONFIG_GTP_DDA_STYLUS",
+        ],
+    },
+    conditional_defines = {
+        "CONFIG_INPUT_ILI_0FLASH_MMI_ENABLE_DOUBLE_TAP": [
+            "ILI_SENSOR_EN",
+        ],
+        "CONFIG_INPUT_ILI_0FLASH_MMI_NOTIFY_TOUCH_STATE": [
+            "ILI_SET_TOUCH_STATE",
+        ],
+        "CONFIG_BOARD_USES_DOUBLE_TAP_CTRL": [
+            "CONFIG_BOARD_USES_DOUBLE_TAP_CTRL",
+        ],
+        "CONFIG_INPUT_ILI_PANEL_NOTIFICATIONS": [
+            "ILI_CONFIG_PANEL_NOTIFICATIONS",
+        ],
+        "CONFIG_ILITEK_RESUME_BY_DDI": [
+            "ILI_CONFIG_RESUME_BY_DDI",
+        ],
+        "CONFIG_ILITEK_FW_PANEL": [
+            "ILI_FW_PANEL",
+        ],
+        "CONFIG_ILITEK_SUSPEND_PWROFF": [
+            "ILI_SUSPEND_PWROFF",
+        ],
+        "CONFIG_ILITEK_CHARGER": [
+            "ILI_CONFIG_CHARGER",
+        ],
+        "CONFIG_ILITEK_ESD": [
+            "ILI_CONFIG_ESD",
+        ],
+        "CONFIG_ILITEK_GESTURE": [
+            "ILI_CONFIG_GESTURE",
+        ],
+        "CONFIG_INPUT_ILITEK_MMI_PEN_NOTIFIER": [
+            "ILITEK_PEN_NOTIFIER",
+        ],
+        "CONFIG_ILITEK_PANEL_GESTURE": [
+            "ILI_CONFIG_PANEL_GESTURE",
+        ],
+        "CONFIG_DRM_PANEL_EVENT_NOTIFICATIONS": [
+            "CONFIG_DRM_PANEL_EVENT_NOTIFICATIONS",
+        ],
+        "CONFIG_ILITEK_PASSIVE_PEN": [
+            "ILI_PASSIVE_PEN",
+        ],
+        "CONFIG_ILI_TOUCH_LAST_TIME": [
+            "ILI_TOUCH_LAST_TIME",
+        ],
+        "CONFIG_INPUT_TOUCHSCREEN_MMI": [
+            "CONFIG_INPUT_TOUCHSCREEN_MMI",
+        ],
+        "CONFIG_GTP_DDA_STYLUS": [
+            "CONFIG_MOTO_DDA_PASSIVESTYLUS",
+        ],
+    },
+    conditional_srcs = {
+        "CONFIG_INPUT_TOUCHSCREEN_MMI": [
+            "ili_mmi_class.c",
+        ],
+        "CONFIG_GTP_DDA_STYLUS": [
+            "moto_ts_dda.c",
+        ],
+    },
+    deps = [
+        "//vendor/qcom/sm8450-modules/motorola/drivers/input/touchscreen/touchscreen_mmi:%b_touchscreen_mmi",
+        "//vendor/qcom/sm8450-modules/motorola/drivers/mmi_info:%b_mmi_info",
+        "//vendor/qcom/sm8450-modules/motorola/drivers/misc/pen:%b_bu520xx_pen",
+        "//vendor/qcom/sm8450-modules/qcom/opensource/display-drivers:%b_display_drivers",
+    ],
+)
