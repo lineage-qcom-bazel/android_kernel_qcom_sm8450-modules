@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: GPL-2.0
+# Kleaf DDK translation of Kbuild, see motorola/moto_modules.bzl
+load("//vendor/qcom/sm8450-modules/motorola:moto_modules.bzl", "moto_module")
+
+moto_module(
+    name = "sgm4154x_charger_lite",
+    srcs = [
+        "sgm4154x_charger_lite.c",
+    ] + glob(["**/*.h"]),
+    # CONFIG_SGM4154X_CHARGER_NAME is unset
+    local_defines = [
+        "__SGM41516D_CHIP_ID__",
+    ],
+    deps = [
+        "//vendor/qcom/sm8450-modules/motorola/drivers/power/mmi_charger:headers",
+        "//vendor/qcom/sm8450-modules/motorola/drivers/power/mmi_charger:%b_mmi_charger",
+    ],
+)
