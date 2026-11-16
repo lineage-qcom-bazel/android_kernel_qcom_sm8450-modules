@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: GPL-2.0
+# Kleaf DDK translation of Kbuild, see motorola/moto_modules.bzl
+load("//vendor/qcom/sm8450-modules/motorola:moto_modules.bzl", "moto_module")
+
+moto_module(
+    name = "sx937x_sar",
+    srcs = [
+        "sx937x_sar.c",
+    ] + glob(["**/*.h"]),
+    conditional_defines = {
+        "CONFIG_SX937X_USB_CAL": [
+            "CONFIG_CAPSENSE_USB_CAL",
+        ],
+        "CONFIG_SX937X_POWER_SUPPLY_ONLINE": [
+            "CONFIG_USE_POWER_SUPPLY_ONLINE",
+        ],
+        "CONFIG_SX937X_FLIP_CAL": [
+            "CONFIG_CAPSENSE_FLIP_CAL",
+        ],
+        "CONFIG_CAPSENSE_HALL_CAL": [
+            "CONFIG_CAPSENSE_HALL_CAL",
+        ],
+    },
+    deps = [
+        "//vendor/qcom/sm8450-modules/motorola/drivers/sensors:%b_sensors_class",
+    ],
+    kernel_internal_headers = True,
+)
