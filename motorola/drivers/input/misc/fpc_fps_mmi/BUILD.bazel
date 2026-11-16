@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: GPL-2.0
+# Kleaf DDK translation of Kbuild, see motorola/moto_modules.bzl
+load("//vendor/qcom/sm8450-modules/motorola:moto_modules.bzl", "moto_module")
+
+moto_module(
+    name = "fpc1020_mmi",
+    srcs = [
+        "fpc1020_tee.c",
+    ],
+    # KBUILD_OPTIONS of the Makefile
+    make_variables = [
+        "CONFIG_INPUT_MISC_FPC1020_SAVE_TO_CLASS_DEVICE",
+    ],
+    conditional_defines = {
+        "CONFIG_INPUT_MISC_FPC1020_SAVE_TO_CLASS_DEVICE": [
+            "CONFIG_INPUT_MISC_FPC1020_SAVE_TO_CLASS_DEVICE",
+        ],
+    },
+)
