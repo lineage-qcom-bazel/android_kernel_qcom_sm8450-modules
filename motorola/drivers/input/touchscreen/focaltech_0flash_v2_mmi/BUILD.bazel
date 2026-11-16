@@ -1,0 +1,70 @@
+# SPDX-License-Identifier: GPL-2.0
+# Kleaf DDK translation of Kbuild, see motorola/moto_modules.bzl
+load("//vendor/qcom/sm8450-modules/motorola:moto_modules.bzl", "moto_module")
+
+moto_module(
+    name = "focaltech_0flash_v2_mmi",
+    srcs = [
+        "focaltech_core.c",
+        "focaltech_esdcheck.c",
+        "focaltech_ex_fun.c",
+        "focaltech_ex_mode.c",
+        "focaltech_flash.c",
+        "focaltech_gesture.c",
+        "focaltech_point_report_check.c",
+        "focaltech_spi.c",
+    ] + glob(["**/*.h"]),
+    # Always built against GKI (FTS_COMPATIBLE_WITH_GKI)
+    local_defines = [
+        "CONFIG_FTS_COMPATIBLE_WITH_GKI",
+    ],
+    conditional_defines = {
+        "CONFIG_INPUT_TOUCHSCREEN_MMI": [
+            "CONFIG_INPUT_TOUCHSCREEN_MMI",
+        ],
+        "CONFIG_INPUT_FOCALTECH_0FLASH_MMI_ENABLE_DOUBLE_TAP": [
+            "FOCALTECH_SENSOR_EN",
+        ],
+        "CONFIG_BOARD_USES_DOUBLE_TAP_CTRL": [
+            "CONFIG_FTS_DOUBLE_TAP_CONTROL",
+        ],
+        "CONFIG_INPUT_FOCALTECH_0FLASH_MMI_NOTIFY_TOUCH_STATE": [
+            "FTS_SET_TOUCH_STATE",
+        ],
+        "CONFIG_INPUT_FOCALTECH_ESD_EN": [
+            "FOCALTECH_ESD_EN",
+        ],
+        "CONFIG_INPUT_FOCALTECH_PANEL_NOTIFICATIONS": [
+            "FOCALTECH_CONFIG_PANEL_NOTIFICATIONS",
+        ],
+        "CONFIG_DRM_PANEL_EVENT_NOTIFICATIONS": [
+            "CONFIG_DRM_PANEL_EVENT_NOTIFICATIONS",
+        ],
+        "CONFIG_INPUT_FOCALTECH_DEBUG_EN": [
+            "FOCALTECH_DEBUG_EN",
+        ],
+        "CONFIG_INPUT_FOCALTECH_PINCTRL_EN": [
+            "FOCALTECH_PINCTRL_EN",
+        ],
+        "CONFIG_FOCALTECH_LAST_TIME": [
+            "FTS_LAST_TIME_EN",
+        ],
+        "CONFIG_FTS_MULTI_FW": [
+            "CONFIG_FTS_MULTI_FW",
+        ],
+        "CONFIG_FTS_SPI_CS_DELAY": [
+            "CONFIG_FTS_SPI_CS_DELAY",
+        ],
+    },
+    conditional_srcs = {
+        "CONFIG_INPUT_TOUCHSCREEN_MMI": [
+            "focaltech_mmi_class.c",
+        ],
+    },
+    deps = [
+        "//vendor/qcom/sm8450-modules/motorola/drivers/input/touchscreen/touchscreen_mmi:%b_touchscreen_mmi",
+        "//vendor/qcom/sm8450-modules/motorola/drivers/mmi_info:%b_mmi_info",
+        "//vendor/qcom/sm8450-modules/motorola/drivers/sensors:%b_sensors_class",
+        "//vendor/qcom/sm8450-modules/qcom/opensource/display-drivers:%b_display_drivers",
+    ],
+)
