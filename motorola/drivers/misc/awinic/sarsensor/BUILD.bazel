@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: GPL-2.0
+# Kleaf DDK translation of Kbuild, see motorola/moto_modules.bzl
+load("//vendor/qcom/sm8450-modules/motorola:moto_modules.bzl", "moto_module")
+
+moto_module(
+    name = "awinic_sar",
+    srcs = [
+        "comm/aw_sar_comm_interface.c",
+        "aw_sar.c",
+        "aw963xx/aw963xx.c",
+    ] + glob(["**/*.h"]),
+    conditional_defines = {
+        "CONFIG_AW96XX_POWER_SUPPLY_ONLINE": [
+            "CONFIG_USE_POWER_SUPPLY_ONLINE",
+        ],
+        "CONFIG_CAPSENSE_HALL_CAL": [
+            "CONFIG_CAPSENSE_HALL_CAL",
+        ],
+    },
+    deps = [
+        "//vendor/qcom/sm8450-modules/motorola:awinic_headers",
+        "//vendor/qcom/sm8450-modules/motorola/drivers/sensors:%b_sensors_class",
+    ],
+    kernel_internal_headers = True,
+)

@@ -13,3 +13,10 @@ ddk_headers(
     hdrs = glob(["include/**/*.h"]),
     includes = ["include"],
 )
+
+# -I$(ANDROID_BUILD_TOP)/motorola/kernel/modules/include/linux/input/awinic
+ddk_headers(
+    name = "awinic_headers",
+    hdrs = glob(["include/linux/input/awinic/*.h"]),
+    includes = ["include/linux/input/awinic"],
+)
