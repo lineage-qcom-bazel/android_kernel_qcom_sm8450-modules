@@ -1,0 +1,122 @@
+# SPDX-License-Identifier: GPL-2.0
+# Kleaf DDK translation of Kbuild, see motorola/moto_modules.bzl
+load("//vendor/qcom/sm8450-modules/motorola:moto_modules.bzl", "moto_module")
+
+moto_module(
+    name = "nova_0flash_mmi",
+    srcs = [
+        "nt36xxx.c",
+        "nt36xxx_ext_proc.c",
+        "nt36xxx_fw_update.c",
+        "nt36xxx_mp_ctrlram.c",
+    ] + glob(["**/*.h"]),
+    local_defines = [
+        "CFG_CTS_FOR_GKI",
+    ],
+    # KBUILD_OPTIONS of the Makefile
+    make_variables = [
+        "CONFIG_INPUT_NOVA_0FLASH_MMI_ENABLE_DOUBLE_TAP",
+        "CONFIG_INPUT_NOVA_0FLASH_MMI_NOTIFY_TOUCH_STATE",
+        "CONFIG_NOVA_TOUCH_LAST_TIME",
+        "CONFIG_STOWED_MODE_EN",
+        "CONFIG_INPUT_NOVA_DRM_PANEL",
+        "CONFIG_INPUT_NOVA_CHIP_VER_1",
+        "CONFIG_NOVA_ESD_ENABLE",
+        "CONFIG_NVT_WAKEUP_GESTURE_CTRL",
+        "CONFIG_INPUT_NOVA_0FLASH_MMI_STYLUS_PALM",
+        "CONFIG_INPUT_NOVA_0FLASH_MMI_STYLUS_PALM_RANGE",
+        "CONFIG_INPUT_NOVA_0FLASH_MMI_PEN_NOTIFIER",
+        "CONFIG_DRM_PANEL_EVENT_NOTIFICATIONS",
+        "CONFIG_INPUT_TOUCHSCREEN_MMI_NVT",
+        "CONFIG_TOUCHCLASS_MMI_MULTIWAY_UPDATE_FW",
+        "CONFIG_BOARD_USES_DOUBLE_TAP_CTRL",
+        "CONFIG_SPI_SM8450",
+        "CONFIG_GTP_DDA_STYLUS",
+    ],
+    conditional_defines = {
+        "CONFIG_INPUT_NOVA_0FLASH_MMI_ENABLE_DOUBLE_TAP": [
+            "NVT_SENSOR_EN",
+        ],
+        "CONFIG_INPUT_NOVA_0FLASH_MMI_NOTIFY_TOUCH_STATE": [
+            "NVT_SET_TOUCH_STATE",
+        ],
+        "CONFIG_NOVA_TOUCH_LAST_TIME": [
+            "NVT_TOUCH_LAST_TIME",
+        ],
+        "CONFIG_INPUT_HIGH_RESOLUTION_N": [
+            "CONFIG_INPUT_HIGH_RESOLUTION_N",
+        ],
+        "CONFIG_STOWED_MODE_EN": [
+            "NOVA_STOWED_MODE_EN",
+        ],
+        "CONFIG_INPUT_NOVA_PANEL_NOTIFICATIONS": [
+            "NVT_CONFIG_PANEL_NOTIFICATIONS",
+        ],
+        "CONFIG_INPUT_NOVA_DRM_PANEL": [
+            "NVT_CONFIG_DRM_PANEL",
+        ],
+        "CONFIG_TOUCH_PANEL_NOTIFICATIONS": [
+            "CONFIG_PANEL_NOTIFICATIONS",
+        ],
+        "CONFIG_INPUT_NOVA_CHIP_VER_1": [
+            "NVT_CONFIG_CHIP_VER_1",
+        ],
+        "CONFIG_NOVA_ESD_ENABLE": [
+            "NVT_CONFIG_ESD_ENABLE",
+        ],
+        "CONFIG_NOVA_LCM_FAST_LIGHTUP": [
+            "LCM_FAST_LIGHTUP",
+        ],
+        "CONFIG_INPUT_NOVA_0FLASH_MMI_STYLUS_PALM": [
+            "PALM_GESTURE",
+        ],
+        "CONFIG_INPUT_NOVA_0FLASH_MMI_STYLUS_PALM_RANGE": [
+            "PALM_GESTURE_RANGE",
+        ],
+        "CONFIG_INPUT_NOVA_0FLASH_MMI_PEN_NOTIFIER": [
+            "NOVATECH_PEN_NOTIFIER",
+        ],
+        "CONFIG_INPUT_NOVA_EDGE_SUPPRESSION": [
+            "EDGE_SUPPRESSION",
+        ],
+        "CONFIG_BOARD_USES_DOUBLE_TAP_CTRL": [
+            "CONFIG_BOARD_USES_DOUBLE_TAP_CTRL",
+        ],
+        "CONFIG_NVT_WAKEUP_GESTURE_CTRL": [
+            "NVT_WAKEUP_GESTURE_CTRL",
+        ],
+        "CONFIG_SPI_SM8450": [
+            "CONFIG_SPI_SM8450",
+        ],
+        "CONFIG_DRM_PANEL_NOTIFICATIONS": [
+            "CONFIG_DRM_PANEL_NOTIFICATIONS",
+        ],
+        "CONFIG_DRM_PANEL_EVENT_NOTIFICATIONS": [
+            "CONFIG_DRM_PANEL_EVENT_NOTIFICATIONS",
+        ],
+        "CONFIG_INPUT_TOUCHSCREEN_MMI_NVT": [
+            "CONFIG_INPUT_TOUCHSCREEN_MMI",
+        ],
+        "CONFIG_TOUCHCLASS_MMI_MULTIWAY_UPDATE_FW": [
+            "TS_MMI_TOUCH_MULTIWAY_UPDATE_FW",
+        ],
+        "CONFIG_GTP_DDA_STYLUS": [
+            "CONFIG_MOTO_DDA_PASSIVESTYLUS",
+        ],
+    },
+    conditional_srcs = {
+        "CONFIG_INPUT_TOUCHSCREEN_MMI_NVT": [
+            "nt36xxx_mmi_class.c",
+        ],
+        "CONFIG_GTP_DDA_STYLUS": [
+            "moto_ts_dda.c",
+        ],
+    },
+    deps = [
+        "//vendor/qcom/sm8450-modules/motorola/drivers/sensors:%b_sensors_class",
+        "//vendor/qcom/sm8450-modules/motorola/drivers/mmi_info:%b_mmi_info",
+        "//vendor/qcom/sm8450-modules/motorola/drivers/input/touchscreen/touchscreen_mmi:%b_touchscreen_mmi",
+        "//vendor/qcom/sm8450-modules/motorola/drivers/misc/pen:%b_bu520xx_pen",
+        "//vendor/qcom/sm8450-modules/qcom/opensource/display-drivers:%b_display_drivers",
+    ],
+)
