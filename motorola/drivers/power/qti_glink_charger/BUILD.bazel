@@ -8,6 +8,11 @@ moto_module(
         "qti_glink_charger_core.c",
         "trusted_shash_lib.c",
     ] + glob(["**/*.h"]),
+    # KBUILD_OPTIONS of the Makefile
+    make_variables = [
+        "CONFIG_WIRELESS_CPS4035B",
+        "CONFIG_WIRELESS_CPS4019",
+    ],
     conditional_defines = {
         "CONFIG_WIRELESS_CPS4035B": [
             "WIRELESS_CPS4035B",
