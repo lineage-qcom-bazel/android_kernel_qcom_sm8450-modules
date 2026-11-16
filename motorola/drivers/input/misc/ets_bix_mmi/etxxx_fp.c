@@ -75,6 +75,13 @@
 #include <drm/drm_panel.h>
 #elif defined(SET_QCOM_PANEL_EVENT_NOTIFIER)
 #include <linux/soc/qcom/panel_event_notifier.h>
+/*
+ * There is no PANEL_EVENT_NOTIFIER_CLIENT_FPS here. Each client has a
+ * single slot and touchscreen_mmi takes PRIMARY_TOUCH, so register in the
+ * SECONDARY_TOUCH slot, which touchscreen_mmi only uses for a secondary
+ * display.
+ */
+#define ETS_PANEL_EVENT_NOTIFIER_CLIENT PANEL_EVENT_NOTIFIER_CLIENT_SECONDARY_TOUCH
 #elif defined(CONFIG_FB)
 #include <linux/fb.h>
 #define FP_NOTIFY_ON                            FB_BLANK_UNBLANK
@@ -1501,10 +1508,12 @@ int egisfp_probe(struct platform_device *pdev)
 	DEBUG_PRINT(" %s : CONFIG_QCOM_PANEL_EVENT_NOTIFIER is enable \n", __func__);
 	if (egis_dev->active_panel) {
 		DEBUG_PRINT(" %s : register panel event notifier \n", __func__);
-		egis_dev->notifier_cookie = panel_event_notifier_register(PANEL_EVENT_NOTIFICATION_PRIMARY, PANEL_EVENT_NOTIFIER_CLIENT_FPS,
+		egis_dev->notifier_cookie = panel_event_notifier_register(PANEL_EVENT_NOTIFICATION_PRIMARY, ETS_PANEL_EVENT_NOTIFIER_CLIENT,
 		egis_dev->active_panel, &fps_panel_notifier_callback, egis_dev);
-		if (!egis_dev->notifier_cookie) {
-			ERROR_PRINT("  %s : register panel events fail: %d ", __func__, status);
+		if (IS_ERR_OR_NULL(egis_dev->notifier_cookie)) {
+			ERROR_PRINT("  %s : register panel events fail: %d ", __func__,
+				(int)PTR_ERR_OR_ZERO(egis_dev->notifier_cookie));
+			egis_dev->notifier_cookie = NULL;
 		} else {
 			egis_dev->call_back_registered = 1;
 			ERROR_PRINT(" %s : registered for panel notifications on panel\n", __func__);
