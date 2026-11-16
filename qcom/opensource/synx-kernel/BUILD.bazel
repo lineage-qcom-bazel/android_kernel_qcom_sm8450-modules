@@ -38,3 +38,7 @@ define_niobe()
 load(":sun.bzl", "define_sun")
 
 define_sun()
+
+load(":parrot.bzl", "define_parrot")
+
+define_parrot()
