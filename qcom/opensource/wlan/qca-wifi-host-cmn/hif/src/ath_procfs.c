@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if defined(CONFIG_ATH_PROCFS_DIAG_SUPPORT)
+#if defined(ATH_PROCFS_DIAG_SUPPORT)
 #include <linux/module.h>       /* Specifically, a module */
 #include <linux/kernel.h>       /* We're doing kernel work */
 #include <linux/version.h>      /* We're doing kernel work */

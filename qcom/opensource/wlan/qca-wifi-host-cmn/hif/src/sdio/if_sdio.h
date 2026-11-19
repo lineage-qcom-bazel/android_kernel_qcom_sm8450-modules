@@ -53,7 +53,7 @@ struct hif_sdio_softc {
 	struct hostdef_s *hostdef;
 };
 
-#if defined(CONFIG_ATH_PROCFS_DIAG_SUPPORT)
+#if defined(ATH_PROCFS_DIAG_SUPPORT)
 int athdiag_procfs_init(void *scn);
 void athdiag_procfs_remove(void);
 #else
