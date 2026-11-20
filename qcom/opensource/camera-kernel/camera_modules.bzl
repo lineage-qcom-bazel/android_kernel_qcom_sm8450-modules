@@ -31,6 +31,13 @@ _MUMBA_DEFINES = [
 
 _PRODUCT_DEFINES = {
     "parrot": {
+        "avatrn": _MOTO_DEFINES + _MOTO_OIS_DEFINES + [
+            "CONFIG_MOT_CUSTOM_CTLE_PARAM=1",
+            "CONFIG_MOT_SM7435_AVATRN=1",
+            "CONFIG_MOT_OIS_DW9784_ACTIVE_OIS=1",
+            "CONFIG_IMX896_MP_SENSOR_COMPATIBLE=1",
+        ],
+        "genevn": _LAMY_DEFINES,
         "lamy": _LAMY_DEFINES,
         "mona": _MONA_DEFINES,
         "monai": _MONA_DEFINES,
